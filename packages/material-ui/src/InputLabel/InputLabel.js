@@ -1,28 +1,37 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
+import { deepmerge } from '@material-ui/utils';
+import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
 import formControlState from '../FormControl/formControlState';
 import useFormControl from '../FormControl/useFormControl';
-import withStyles from '../styles/withStyles';
 import FormLabel from '../FormLabel';
+import useThemeProps from '../styles/useThemeProps';
+import experimentalStyled from '../styles/experimentalStyled';
+import { getInputLabelClasses } from './inputLabelClasses';
 
-export const styles = (theme) => ({
+const overridesResolver = ({ styleProps }, styles) => {
+  return deepmerge(styles.root || {}, {
+
+    ...(styleProps.fullWidth && styles.fullWidth),
+  });
+};
+
+const useUtilityClasses = (styleProps) => {
+  const { classes, margin, fullWidth } = styleProps;
+  const slots = {
+    root: ['root', `margin${capitalize(margin)}`, fullWidth && 'fullWidth'],
+  };
+
+  return composeClasses(slots, getFormControlUtilityClasses, classes);
+};
+
+const InputLabelRoot = experimentalStyled(FormLabel)((theme) => ({
   /* Styles applied to the root element. */
   root: {
     display: 'block',
     transformOrigin: 'top left',
   },
-  /* Pseudo-class applied to the root element if `focused={true}`. */
-  focused: {},
-  /* Pseudo-class applied to the root element if `disabled={true}`. */
-  disabled: {},
-  /* Pseudo-class applied to the root element if `error={true}`. */
-  error: {},
-  /* Pseudo-class applied to the root element if `required={true}`. */
-  required: {},
-  /* Pseudo-class applied to the asterisk element. */
-  asterisk: {},
-  /* Styles applied to the root element if the component is a descendant of `FormControl`. */
   formControl: {
     position: 'absolute',
     left: 0,
@@ -79,7 +88,7 @@ export const styles = (theme) => ({
       transform: 'translate(14px, -6px) scale(0.75)',
     },
   },
-});
+}));
 
 const InputLabel = React.forwardRef(function InputLabel(props, ref) {
   const {
