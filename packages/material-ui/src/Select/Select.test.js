@@ -2,9 +2,8 @@ import * as React from 'react';
 import { expect } from 'chai';
 import { spy, stub, useFakeTimers } from 'sinon';
 import {
-  getClasses,
   createMount,
-  describeConformance,
+  describeConformanceV5,
   ErrorBoundary,
   act,
   createClientRender,
@@ -15,23 +14,21 @@ import MenuItem from '../MenuItem';
 import Input from '../Input';
 import InputLabel from '../InputLabel';
 import Select from './Select';
+import classes from './selectClasses';
 
 describe('<Select />', () => {
-  let classes;
   const mount = createMount({ strict: true });
   // StrictModeViolation: triggers "not wrapped in act()" warnings from timers.
   const render = createClientRender({ strict: false });
 
-  before(() => {
-    classes = getClasses(<Select />);
-  });
 
-  describeConformance(<Select value="" />, () => ({
+  describeConformanceV5(<Select value="" />, () => ({
     classes,
     inheritComponent: Input,
     mount,
     refInstanceof: window.HTMLDivElement,
-    skip: ['componentProp', 'rootClass'],
+    muiName: 'MuiSelect',
+    skip: ['componentProp', 'componentsProp', 'rootClass', 'themeVariants', 'themeStyleOverrides'],
   }));
 
   describe('prop: inputProps', () => {

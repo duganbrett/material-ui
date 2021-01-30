@@ -4,12 +4,32 @@ import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import MuiError from '@material-ui/utils/macros/MuiError.macro';
 import { refType } from '@material-ui/utils';
+import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
 import ownerDocument from '../utils/ownerDocument';
 import capitalize from '../utils/capitalize';
 import Menu from '../Menu/Menu';
 import { isFilled } from '../InputBase/utils';
 import useForkRef from '../utils/useForkRef';
 import useControlled from '../utils/useControlled';
+import { getSelectUtilitiyClasses } from './selectClasses'
+import { rootStyles, iconStyles, overridesResolver, iconOverridesResolver } from '../NativeSelect/NativeSelectInput'
+import experimentalStyled from '../styles/experimentalStyled';
+
+const nativeInputOverridesResolver = (props, styles) => {
+  return styles.nativeInput
+};
+
+const useUtilityClasses = (styleProps) => {
+  const { classes, variant, open, disabled } = styleProps;
+
+  const slots = {
+    root: ['root', 'select', 'selectMeunu', variant, disabled && disabled],
+    nativeInput: ['nativeInput'],
+    icon: ['icon', `icon${capitalize(variant)}`, open && 'iconOpen',disabled && disabled],
+  };
+
+  return composeClasses(slots, getSelectUtilitiyClasses, classes);
+};
 
 function areEqualValues(a, b) {
   if (typeof b === 'object' && b !== null) {
@@ -23,6 +43,32 @@ function isEmpty(display) {
   return display == null || (typeof display === 'string' && !display.trim());
 }
 
+const Root = experimentalStyled(
+  'div',
+  {},
+  { name: 'MuiSelect', slot: 'Root', overridesResolver },
+)(rootStyles);
+
+const IconRoot = experimentalStyled(
+  'svg',
+  {},
+  { name: 'MuiSelect', slot: 'Icon', overridesResolver: iconOverridesResolver },
+)(iconStyles);
+
+const InputRoot = experimentalStyled(
+  'input',
+  {},
+  { name: 'MuiSelect', slot: 'nativeInput', overridesResolver: nativeInputOverridesResolver },
+)(() => ({
+  bottom: 0,
+  left: 0,
+  position: 'absolute',
+  opacity: 0,
+  pointerEvents: 'none',
+  width: '100%',
+  boxSizing: 'border-box',
+}));
+
 /**
  * @ignore - internal component.
  */
@@ -33,7 +79,6 @@ const SelectInput = React.forwardRef(function SelectInput(props, ref) {
     autoFocus,
     autoWidth,
     children,
-    classes,
     className,
     defaultValue,
     disabled,
@@ -357,9 +402,20 @@ const SelectInput = React.forwardRef(function SelectInput(props, ref) {
 
   const buttonId = SelectDisplayProps.id || (name ? `mui-component-select-${name}` : undefined);
 
+  const styleProps = {
+    ...props,
+    variant,
+    disabled,
+    open,
+    selectMenu: true
+  };
+
+  const classes = useUtilityClasses(styleProps);
+
   return (
     <React.Fragment>
-      <div
+      <Root
+        styleProps={styleProps}
         ref={handleDisplayRef}
         tabIndex={tabIndex}
         role="button"
@@ -375,13 +431,7 @@ const SelectInput = React.forwardRef(function SelectInput(props, ref) {
         onFocus={onFocus}
         {...SelectDisplayProps}
         className={clsx(
-          classes.root, // TODO v5: merge root and select
-          classes.select,
-          classes.selectMenu,
-          classes[variant],
-          {
-            [classes.disabled]: disabled,
-          },
+          classes.root,
           className,
           SelectDisplayProps.className,
         )}
@@ -396,8 +446,9 @@ const SelectInput = React.forwardRef(function SelectInput(props, ref) {
         ) : (
           display
         )}
-      </div>
-      <input
+      </Root>
+      <InputRoot
+        styleProps={styleProps}
         value={Array.isArray(value) ? value.join(',') : value}
         name={name}
         ref={inputRef}
@@ -409,11 +460,10 @@ const SelectInput = React.forwardRef(function SelectInput(props, ref) {
         autoFocus={autoFocus}
         {...other}
       />
-      <IconComponent
-        className={clsx(classes.icon, classes[`icon${capitalize(variant)}`], {
-          [classes.iconOpen]: open,
-          [classes.disabled]: disabled,
-        })}
+      <IconRoot
+        as={IconComponent}
+        styleProps={styleProps}
+        className={classes.icon}
       />
       <Menu
         id={`menu-${name || ''}`}
